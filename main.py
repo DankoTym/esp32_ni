@@ -44,8 +44,8 @@ while True:
         temperatura = d.temperature()
         humedad = d.humidity()
         datos = json.dumps(OrderedDict([
-            ('temperatura',temperatura),
-            ('humedad',humedad)
+            ('la calor',temperatura),
+            ('humedadqq',humedad)
         ]))
         print(datos)
     except OSError as e:
