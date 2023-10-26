@@ -1,4 +1,5 @@
-# Germán Andrés Xander 2023
+# Tymcziszyn Danko M.
+# Curso IOT 2023
 
 from machine import Pin, Timer, unique_id
 import dht
@@ -11,17 +12,19 @@ from umqtt.robust import MQTTClient
 
 CLIENT_ID = ubinascii.hexlify(unique_id()).decode('utf-8')
 
+
 mqtt = MQTTClient(CLIENT_ID, SERVIDOR_MQTT,
                   port=8883, keepalive=10, ssl=True)
 
 led = Pin(2, Pin.OUT)
 d = dht.DHT22(Pin(25))
 contador = 0
+registro_temp = 0
+bandera=0
 
 def heartbeat(nada):
     global contador
     if contador > 5:
-        pulsos.deinit()
         contador = 0
         return
     led.value(not led.value())
@@ -32,21 +35,26 @@ def transmitir(pin):
     mqtt.connect()
     mqtt.publish(f"iot/{CLIENT_ID}",datos)
     mqtt.disconnect()
-    pulsos.init(period=150, mode=Timer.PERIODIC, callback=heartbeat)
 
-publicar = Timer(0)
-publicar.init(period=30000, mode=Timer.PERIODIC, callback=transmitir)
-pulsos = Timer(1)
 
 while True:
     try:
         d.measure()
         temperatura = d.temperature()
+        registro_temp = temperatura
         humedad = d.humidity()
         datos = json.dumps(OrderedDict([
-            ('la calor',temperatura),
-            ('humedadqq',humedad)
+            ('Temperatura',temperatura),
+            ('humedad',humedad)
         ]))
+
+        if temperatura >= 25.0 and bandera == 0:        # Establecí 25°C como temperatura superior a partir de la cual notifica.
+            bandera = 1
+            transmitir(datos)
+
+        if temperatura<22.0:                            # Reinicia la bandera al bajar de 22°C.
+            bandera = 0
+
         print(datos)
     except OSError as e:
         print("sin sensor")
