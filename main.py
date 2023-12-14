@@ -1,4 +1,4 @@
-# Germán Andrés Xander 2023
+# Tymcziszyn Danko; Curso IOT 2023
 
 from machine import Pin, Timer, unique_id
 import dht
@@ -25,17 +25,22 @@ def sub_cb(topic, msg):
     if msg==b"encender":
         led.value(1)
 
+
 mqtt.set_callback(sub_cb)
 mqtt.connect()
 mqtt.subscribe(f"iot/{CLIENT_ID}/comando")
+mqtt.subscribe(f"iot/{CLIENT_ID}/estado")
 
 def transmitir(pin):
     mqtt.publish(f"iot/{CLIENT_ID}",datos)
 
+
 timer1 = Timer(1)
-timer1.init(period=20000, mode=Timer.PERIODIC, callback=transmitir)
+timer1.init(period=60000, mode=Timer.PERIODIC, callback=transmitir)
+
 
 datos={}
+
 
 while True:
     try:
@@ -47,6 +52,12 @@ while True:
             ('humedad',humedad)
         ]))
         print(datos)
+
+        #adquiero valor del led
+        led_state = led.value()
+        # Convertir el estado del LED a formato JSON
+        estado = json.dumps({"led_state": led_state})
+        mqtt.publish(f"iot/{CLIENT_ID}",estado)
     except OSError as e:
         print("sin sensor")
     mqtt.check_msg()
